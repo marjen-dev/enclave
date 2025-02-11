@@ -1,0 +1,110 @@
+networks:
+  gw-net:
+    external: true
+    name: ${DOCKER_BRIDGE_NAME}
+
+services:
+  enclave:
+     image: enclavenetworks/enclave:latest
+     restart: unless-stopped
+     volumes:
+      - enclave-config:/etc/enclave
+      - enclave-logs:/var/log/enclave
+     mem_limit: 300M
+     cpu_count: 2
+     cap_add:
+       - NET_ADMIN
+     devices:
+       - /dev/net/tun
+     network_mode: 'service:pihole'
+     healthcheck:
+       test: enclave waitfor discover.enclave.io -t 2
+       interval: 1m
+       timeout: 3s
+       retries: 2
+       start_interval: 5s
+       start_period: 1m
+     environment:
+       ENCLAVE_VIRTUAL_IP: ${ENCLAVE_VIRTUAL_IP}
+       ENCLAVE_GATEWAY_DNS_SOURCE_FORWARDING: enabled
+       ENCLAVE_GATEWAY_DNS_UPSTREAM_SERVERS: ${PIHOLE_SECONDARY_IP} # force enclave to only use this gateway to resolve names
+       ENCLAVE_GATEWAY_DNS_UPSTREAM_TIMEOUT_MS: 200
+       ENCLAVE_SOURCE_MATCH_POLICY: any
+       ENCLAVE_LOCAL_PORT: ${ENCLAVE_LOCAL_PORT}
+       ENCLAVE_STUB_RESOLVER: disabled
+       ENCLAVE_ENROLMENT_KEY: ${ENCLAVE_ENROLMENT_KEY}
+       # ENCLAVE_LOG_LEVEL: Debug
+
+  pihole:
+      image: pihole/pihole:latest
+      volumes:
+      - ./etc/pihole:/etc/pihole
+      - etc-dnsmasq:/etc/dnsmasq.d
+      hostname: ${PIHOLE_HOSTNAME}
+      mem_limit: 150M
+      restart: unless-stopped
+      ports:
+      - "${ENCLAVE_LOCAL_PORT}:${ENCLAVE_LOCAL_PORT}/tcp"
+      - "${ENCLAVE_LOCAL_PORT}:${ENCLAVE_LOCAL_PORT}/udp"
+      cpu_count: 1
+      extra_hosts:
+      - "primary.dns.internal:${PIHOLE_PRIMARY_IP}"
+      - "secondary.dns.internal:${PIHOLE_SECONDARY_IP}"
+      networks:
+       gw-net:
+      environment:
+        TZ: 'Europe/London'
+        WEBPASSWORD: ''
+        WEB_PORT: 1080
+        # Traffic to the pihole admin interface is
+        # proxied through caddy (to apply HTTPS and handle redirects).
+        # Restrict the web interface to only be available via that proxy.
+        WEB_BIND_ADDR: 127.0.0.1
+        CORS_HOSTS: dnsfilter.enclave
+        DNSMASQ_LISTENING: all
+        FTLCONF_LOCAL_IPV4: ${ENCLAVE_VIRTUAL_IP}
+        FTLCONF_BLOCK_IPV4: ${ENCLAVE_VIRTUAL_IP}
+        FTLCONF_BLOCKINGMODE: IP-NODATA-AAAA
+        FTLCONF_PIHOLE_PTR: NONE
+        FTLCONF_MAXDBDAYS: 30
+
+  pihole-enclave-sync:
+      image: enclavenetworks/pihole-enclave-sync:latest
+      volumes:
+      - ./etc/pihole:/etc/pihole
+      - enclave-config:/etc/enclave
+      depends_on:
+        pihole:
+          condition: service_healthy
+      mem_limit: 50M
+      cpu_count: 1
+      restart: unless-stopped
+      environment:
+        PIHOLE_SYNC_DBPATH: /etc/pihole/gravity.db
+        PIHOLE_SYNC_CUSTOMDNSLISTPATH: /etc/pihole/custom.list
+        PIHOLE_SYNC_ENCLAVE_PROFILE: Universe
+      network_mode: 'service:pihole'
+
+  caddy:
+    image: caddy:latest
+    volumes:
+      - caddy-data:/data
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./blockpage:/blockpage
+      - ./certs:/certs
+    restart: unless-stopped
+    network_mode: 'service:pihole'
+    depends_on:
+      enclave:
+        condition: service_started
+    mem_limit: 50M
+    cpu_count: 1
+    environment:
+      PIHOLE_PROXY_BIND_ADDR: ${ENCLAVE_VIRTUAL_IP}
+      PIHOLE_LB_UPSTREAM_LIST: http://primary.dns.internal:9999 http://secondary.dns.internal:9999
+
+volumes:
+  enclave-config:
+  enclave-logs:
+  etc-dnsmasq:
+  caddy-data:

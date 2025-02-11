@@ -1,0 +1,48 @@
+# Ignore Mac system files
+.DS_Store
+
+# Ignore temporary files and folders
+tmp/
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Ignore log files
+*.log
+
+# Ignore compiled files (e.g., for shell scripts)
+*.out
+*.exe
+*.o
+*.obj
+
+# Ignore other system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Ignore key material and sensitive files
+*.key
+*.pem
+*.crt
+*.csr
+*.p12
+*.pfx
+*.asc
+
+# Ignore configuration files with sensitive information
+*.env
+*.config
+*.ini
+secrets.yml
+config.yaml
+config.json
+
+# Ignore SSH files
+.ssh/
+id_rsa
+id_rsa.pub
+
+# Ignore generated stacks
+stacks/

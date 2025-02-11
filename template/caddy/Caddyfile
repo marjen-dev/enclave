@@ -1,0 +1,86 @@
+{
+	pki {
+		ca {
+			name "Enclave Internet Gateway Authority"
+			root {
+				cert /certs/gateway.crt
+				key /certs/gateway.key
+			}
+		}
+	}
+}
+
+http:// {
+	bind {$PIHOLE_PROXY_BIND_ADDR}
+	redir http://blocked.enclave
+}
+
+http://dnsfilter.enclave {
+	bind {$PIHOLE_PROXY_BIND_ADDR}
+	route {
+		handle_path /gateway.crt {
+			root * /certs/gateway.crt
+			header * Content-Disposition "attachment"
+			file_server
+		}
+		handle_path /gateway.p7b {
+			root * /certs/gateway.p7b
+			header * Content-Disposition "attachment"
+			file_server
+		}
+
+		redir * https://{host}
+	}
+}
+
+https://dnsfilter.enclave:444 {
+	bind {$PIHOLE_PROXY_BIND_ADDR}
+	tls internal
+
+	reverse_proxy {
+		to {$PIHOLE_LB_UPSTREAM_LIST}
+
+		header_up Host {upstream_hostport}
+
+		lb_policy first
+		lb_try_duration 5s
+		fail_duration 30s
+	}
+}
+
+# This is the 'end' of the chain; and points at the actual running pihole instance on the local host.
+http://:9999 {
+	bind {$PIHOLE_PROXY_BIND_ADDR}
+
+	reverse_proxy http://localhost:1080
+	rewrite * /admin/{path}
+}
+
+https:// {
+
+    bind {$PIHOLE_PROXY_BIND_ADDR}
+
+    tls internal {
+        on_demand
+    }
+
+    @dnsfilter host dnsfilter.enclave
+
+    handle @dnsfilter {
+        redir * https://{host}:444
+    }
+
+    @blocked host blocked.enclave
+
+    handle @blocked {
+        header {
+            X-Frame-Options "DENY"
+        }
+        root * /blockpage
+        file_server
+    }
+
+    handle {
+        redir https://blocked.enclave
+    }
+}
