@@ -3,7 +3,7 @@
 You will need:
 
 - An Enclave API key for an account with access to the tenant.
-- The Enclave tenant's organisation identifier.
+- The Enclave tenant's organization identifier.
 - At least one Ubuntu 22.04 LTS (or later) server.
 
 ## Prepare the host
@@ -24,7 +24,6 @@ You will need:
 
 Note that the `prepare-host.sh` script can be customized. By default, it prepares the OS by installing required dependencies, Docker, and Enclave. You can also enable the script to install the NetData agent, restrict SSH access for root, and enable unattended security updates.
 
-
 ```bash
 DO_PREPARE_OS=true
 DO_INSTALL_DOCKER=true
@@ -36,7 +35,7 @@ DO_UNATTENDED_UPGRADES=false
 
 For example;
 
-```
+```shell
 NEW_HOSTNAME="DC2-UBUNTU-12"
 SSH_USERNAME="gateway-admin"
 SSH_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK0wmN/Cr3JXqmLW7u+g9pTh+wyqDHpSQEIQczXkVx9q hello@example.com"
@@ -55,9 +54,9 @@ On Windows, run `configure-tenant.ps1` passing in your `orgId` and `apiKey`.
 .\configure-tenant.ps1 -orgId abcdefghijklmnopqrstuvwxyz012345 -apiKey abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0
 ```
 
-The PowerShell script will create an Enrolment Key that's valid for one hour and two system enrolments in the target tenant which you will use to enrol each Internet Gateway:
+The PowerShell script will create an Enrolment Key that's valid for one hour and two system enrollments in the target tenant which you will use to enrol each Internet Gateway:
 
-```
+```shell
 Checking for enrolled Internet Gateways...
   No enrolled systems found in this tenant with expected hostnames of an Enclave Internet Gateway.
   Creating a new Internet Gateway Enrolment Key:
@@ -73,7 +72,7 @@ On your Ubuntu server, we'll now use the Enrolment Key from step 1 to create a D
 
 In this example our Internet Gateways are going to be for "Acme Labs", this name will be used as the directory name where the `docker-compose.yml` files will be built for each Internet Gateway in this stack:
 
-```
+```shell
 sudo ./generate-stack.sh -c "ACME Labs" -g -k AAAAA-AAAAA-AAAAA-AAAAA-AAAAA
 ```
 
@@ -81,7 +80,7 @@ The `-g` argument tells the script to generate a new Trusted Root Certificate Au
 
 Expect to see output that looks like this:
 
-```
+```shell
 CUSTOMER_NAME:                    ACME Labs
 STACK_PATH:                       ./stacks/acme_labs
 PKI_PATH:                         ./stacks/acme_labs/pki
@@ -115,14 +114,14 @@ user@DC2-UBUNTU-12:~/stacks/acme_labs/primary-gateway$ sudo ./initialise-bridge-
 
 Expect to see output similar to:
 
-```
+```shell
 441138f7c4499a18f611c14a4968f0f91aa5ccfedeb42a05aebb57ca7447fc58
 Adding iptables rule to allow the bridge network to snat to the Internet
 ```
 
 If you run the script a second time, expect to see output similar to:
 
-```
+```shell
 docker bridge network uwhzjej7gw_n for this stack already exists, nothing to do.
 iptables snat rule 172.17.0.0/16 for this stack already exists, nothing to do.
 ```
@@ -147,7 +146,7 @@ This time, the script will detect the presence of the newly enrolled Internet Ga
 
 Expect to see output similar to:
 
-```
+```shell
 Checking for enrolled Internet Gateways...
 Evaluating Tags...
   Refreshing tag: internet-gateway
@@ -179,30 +178,29 @@ There are three new Tags in the tenant:
 
 Enrol yourself to the tenant and attach the `[internet-gateway-admin]` tag to your system. You'll now be able to access [http://dnsfilter.enclave](http://dnsfilter.enclave) - the PiHole administration interface.
 
-
 We recommend downloading and installing the Gateway's Root Certificate so your browser can trust the block page ([https://blocked.enclave/](https://blocked.enclave/)).
 
 Download the Internet Gateway CA's public certificate in the appropriate format for yourself and end-users:
 
-- http://dnsfilter.enclave/gateway.crt
-- http://dnsfilter.enclave/gateway.p7b
+- <http://dnsfilter.enclave/gateway.crt>
+- <http://dnsfilter.enclave/gateway.p7b>
 
 On Windows, use the `certmgr` tool to install `gateway.crt` into the `Trusted Root Certification Authorities` store using the `LOCAL COMPUTER` scope and restart your browser. Navigate to [http://dnsfilter.enclave](http://dnsfilter.enclave) and check you don't receive any certificate warnings.
 
 To test if your network traffic is successfully routing through the Internet Gateway, check your external IP address and then apply the `[internet-gateway-user]` tag to your system. Your Internet traffic should now be routing through the Internet Gateways and your external IP address should have changed to present as that of the primary Internet Gateway.
 
-# Advanced
+## Advanced
 
-## Operational notes
+### Operational notes
 
 - Failover between gateways is automatic. If one fails or goes offline, connected systems will automatically switch.
 - You may need to disable `Use secure DNS` in Chrome (`chrome://settings/security`) to stop it sending DNS queries directly to Google nameservers.
 - Notice the `300M` docker [memory limit](https://github.com/enclave-networks/internet-gateway/blob/main/template/docker-compose.primary.yml#L13) applied to the Enclave container and increase as required.
 - Only make PiHole configuration changes on the _primary_ gateway as the PiHole configuration in [synced](https://github.com/enclave-networks/internet-gateway/blob/main/template/docker-compose.primary.yml#L124) _from_ the primary to the secondary every 30 minutes.
 
-## Inspection
+### Inspection
 
-To inspect the running environment, the docker commands `ps`, `exec`, `stats` qand `logs` can be helpful.
+To inspect the running environment, the docker commands `ps`, `exec`, `stats` and `logs` can be helpful.
 
 To inspect iptables snat run:
 
