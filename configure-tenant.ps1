@@ -14,7 +14,7 @@
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$env = "C:\repos\enclave\.env"
+$env = ".env"
 $apikey = get-content $env | Where-Object { $_ -match 'ENCLAVE_APIKEY' } | ForEach-Object { $_.split('=')[1] }
 $orgid = get-content $env | Where-Object { $_ -match 'ENCLAVE_ORGID' } | ForEach-Object { $_.split('=')[1] }
 # write-output "$apikey"
@@ -419,6 +419,7 @@ $policiesModel = @(
                 description = "Icmp"
             }
         )
+        gatewayTrafficDirection = "Exit"
     }
 )
 
