@@ -14,7 +14,7 @@
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$env = "C:\repos\enclave\.env"
+$env = ".env" # path to .env file if located in the same folder as this script.
 $apikey = get-content $env | Where-Object { $_ -match 'ENCLAVE_APIKEY' } | ForEach-Object { $_.split('=')[1] }
 $orgid = get-content $env | Where-Object { $_ -match 'ENCLAVE_ORGID' } | ForEach-Object { $_.split('=')[1] }
 # write-output "$apikey"
