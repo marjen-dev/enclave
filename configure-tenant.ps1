@@ -14,7 +14,7 @@
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$env = ".env"
+$env = "c:\repos\enclave\.env"
 $apikey = get-content $env | Where-Object { $_ -match 'ENCLAVE_APIKEY' } | ForEach-Object { $_.split('=')[1] }
 $orgid = get-content $env | Where-Object { $_ -match 'ENCLAVE_ORGID' } | ForEach-Object { $_.split('=')[1] }
 # write-output "$apikey"
@@ -197,7 +197,7 @@ Write-Host "Creating trust requirements..."
 
 $trustRequirements = @(
     @{
-        description = "Geographic IP location"
+        description = "US Only"
         type        = "PublicIp"
         notes       = $null
         settings    = @{
