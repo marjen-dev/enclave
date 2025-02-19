@@ -1,20 +1,9 @@
-# Param(
-#     [Parameter(Mandatory=$true)]
-#     [string]$orgId,
-
-#     [Parameter(Mandatory=$true)]
-#     [string]$apiKey = ""
-
-#     [Parameter(Mandatory=$true)]
-#     [string]$gatewayname = ""
-# )
-
 #region # Connection #
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$env = "c:\repos\enclave\.env"
+$env = "$PWD\.env"
 $apikey = get-content $env | Where-Object { $_ -match 'ENCLAVE_APIKEY' } | ForEach-Object { $_.split('=')[1] }
 $orgid = get-content $env | Where-Object { $_ -match 'ENCLAVE_ORGID' } | ForEach-Object { $_.split('=')[1] }
 # write-output "$apikey"
@@ -66,7 +55,25 @@ function Invoke-EnclaveApi {
         }
     }
     catch {
-        throw "Request to $Uri failed with error: $($_.Exception.Message)"
+        $webException = $_.Exception
+        $responseStream = $webException.Response.GetResponseStream()
+    
+        if ($responseStream) {
+            $reader = New-Object System.IO.StreamReader($responseStream)
+            $responseBody = $reader.ReadToEnd()
+            
+            if ($responseBody) {
+                $jsonResponse = $responseBody | ConvertFrom-Json -ErrorAction SilentlyContinue
+                if ($jsonResponse) {
+                    throw "Request to $Uri failed with error: $($webException.Message)`nResponse Details:`n$(ConvertTo-Json $jsonResponse -Depth 10)"
+                } else {
+                    throw "Request to $Uri failed with error: $($webException.Message)`nResponse Body (Non-JSON):`n$responseBody"
+                }
+            }
+        }
+    
+        # If no response body is present, just show the exception message
+        throw "Request to $Uri failed with error: $($webException.Message)"
     }
 }
 
@@ -504,7 +511,9 @@ foreach ($policyModel in $policiesModel) {
     else {
         # create policy
         Write-Host "  Creating policy: $($policyModel.description)"
-        Write-Host $($policyModel | ConvertTo-Json -Depth 10)
+        fix/better-exception-handling
+        #Write-Host $($policyModel | ConvertTo-Json -Depth 10)
+        main
         $null = Invoke-EnclaveApi -Method Post -Uri "https://api.enclave.io/org/$orgId/policies" -Body $policyModel
     }
 }
