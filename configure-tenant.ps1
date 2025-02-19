@@ -1,14 +1,3 @@
-# Param(
-#     [Parameter(Mandatory=$true)]
-#     [string]$orgId,
-
-#     [Parameter(Mandatory=$true)]
-#     [string]$apiKey = ""
-
-#     [Parameter(Mandatory=$true)]
-#     [string]$gatewayname = ""
-# )
-
 #region # Connection #
 
 $ErrorActionPreference = "Stop"
@@ -504,6 +493,7 @@ foreach ($policyModel in $policiesModel) {
     else {
         # create policy
         Write-Host "  Creating policy: $($policyModel.description)"
+        #Write-Host $($policyModel | ConvertTo-Json -Depth 10)
         $null = Invoke-EnclaveApi -Method Post -Uri "https://api.enclave.io/org/$orgId/policies" -Body $policyModel
     }
 }
