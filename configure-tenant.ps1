@@ -3,7 +3,7 @@
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$env = "c:\repos\enclave\.env"
+$env = "$PWD\.env"
 $apikey = get-content $env | Where-Object { $_ -match 'ENCLAVE_APIKEY' } | ForEach-Object { $_.split('=')[1] }
 $orgid = get-content $env | Where-Object { $_ -match 'ENCLAVE_ORGID' } | ForEach-Object { $_.split('=')[1] }
 # write-output "$apikey"
