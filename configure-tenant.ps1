@@ -55,7 +55,25 @@ function Invoke-EnclaveApi {
         }
     }
     catch {
-        throw "Request to $Uri failed with error: $($_.Exception.Message)"
+        $webException = $_.Exception
+        $responseStream = $webException.Response.GetResponseStream()
+    
+        if ($responseStream) {
+            $reader = New-Object System.IO.StreamReader($responseStream)
+            $responseBody = $reader.ReadToEnd()
+            
+            if ($responseBody) {
+                $jsonResponse = $responseBody | ConvertFrom-Json -ErrorAction SilentlyContinue
+                if ($jsonResponse) {
+                    throw "Request to $Uri failed with error: $($webException.Message)`nResponse Details:`n$(ConvertTo-Json $jsonResponse -Depth 10)"
+                } else {
+                    throw "Request to $Uri failed with error: $($webException.Message)`nResponse Body (Non-JSON):`n$responseBody"
+                }
+            }
+        }
+    
+        # If no response body is present, just show the exception message
+        throw "Request to $Uri failed with error: $($webException.Message)"
     }
 }
 
