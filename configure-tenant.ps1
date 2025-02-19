@@ -76,19 +76,19 @@ function Invoke-EnclaveApi {
 
 $tags = @(
     @{
-        name   = "local-ad-dns"
-        colour = "#3F51B5"
-    },
-    @{
         name   = "internet-gateway"
         colour = "#C6FF00"
     },
     @{
         name   = "internet-gateway-user"
         colour = "#C6FF00"
-    }
+    },
     @{
         name   = "internet-gateway-admin"
+        colour = "#C6FF00"
+    },
+    @{
+        name   = "internet-gateway-local-ad-dns"
         colour = "#C6FF00"
     }
 )
@@ -352,11 +352,11 @@ $policiesModel = @(
     }
     @{
         type        = "Gateway"
-        description = "Local AD / DNS Access"
+        description = "(Internet-Gateway) - Local AD / DNS Access"
         isEnabled   = $true
         notes       = "$notes Allows users to access AD/DNS servers in the local network."
         senderTags  = @(
-            "local-ad-dns"
+            "internet-gateway-local-ad-dns"
         )
         acls        = @(
             @{
@@ -438,8 +438,8 @@ if ( $trustRequirementId ) {
 }
 
 # assign ender tags to policies
-$policiesModel[0].senderTags += $tags[1].name, $tags[3].name
-$policiesModel[3].senderTags += $tags[1].name
+$policiesModel[0].senderTags += $tags[0].name, $tags[2].name
+$policiesModel[3].senderTags += $tags[0].name
 
 $response = Invoke-EnclaveApi -Method Get -Uri "https://api.enclave.io/org/$orgId/policies?include_disabled=true"
 
@@ -504,6 +504,7 @@ foreach ($policyModel in $policiesModel) {
     else {
         # create policy
         Write-Host "  Creating policy: $($policyModel.description)"
+        Write-Host $($policyModel | ConvertTo-Json -Depth 10)
         $null = Invoke-EnclaveApi -Method Post -Uri "https://api.enclave.io/org/$orgId/policies" -Body $policyModel
     }
 }
