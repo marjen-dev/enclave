@@ -1,10 +1,18 @@
+Param(
+    [Parameter(Mandatory = $true)]
+    [string]$orgId,
+
+    [Parameter(Mandatory = $true)]
+    [string]$user = "",
+
+    [Parameter(Mandatory = $true)]
+    [string]$targethost = ""
+)
+
 # Use to create tags and policies to allow a user to rdp into their desktop
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
-
-$user = "user"
-$desktop = "192.168.1.2"
 
 #region # Connection #
 
@@ -19,10 +27,6 @@ if ( $apiKey -eq "" ) {
 if ( $apiKey -eq "" ) {
     Write-Error "No API key provided; either specify the 'apiKey' argument, or set the ENCLAVE_API_KEY environment variable."
     return;
-}
-
-if ( $orgid -eq "" ) {
-    $orgid = $env:ENCLAVE_ORG_ID
 }
 
 if ( $orgid -eq "" ) {
@@ -138,7 +142,7 @@ $policiesModel = @(
         )
         gatewayAllowedIpRanges = @(
             @{
-                gatewayAllowedIpRanges  = "$desktop"
+                gatewayAllowedIpRanges  = "$targethost"
                 description             = "$user DT"
             }
         )
