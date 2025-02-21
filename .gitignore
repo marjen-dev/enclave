@@ -38,6 +38,7 @@ Desktop.ini
 secrets.yml
 config.yaml
 config.json
+_notes.md
 
 # Ignore SSH files
 .ssh/
