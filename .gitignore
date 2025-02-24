@@ -39,6 +39,7 @@ secrets.yml
 config.yaml
 config.json
 _notes.md
+tf_vars.tf
 
 # Ignore SSH files
 .ssh/
