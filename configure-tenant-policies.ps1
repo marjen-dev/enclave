@@ -1,13 +1,13 @@
-Param(
-    [Parameter(Mandatory = $true)]
-    [string]$orgId,
+# Param(
+#     [Parameter(Mandatory = $true)]
+#     [string]$orgId,
 
-    [Parameter(Mandatory = $true)]
-    [string]$user = "",
+#     [Parameter(Mandatory = $true)]
+#     [string]$user = "",
 
-    [Parameter(Mandatory = $true)]
-    [string]$targethost = ""
-)
+#     [Parameter(Mandatory = $true)]
+#     [string]$targethost = ""
+# )
 
 # Use to create tags and policies to allow a user to rdp into their desktop
 
@@ -16,7 +16,7 @@ $ProgressPreference = "SilentlyContinue"
 
 #region # Connection #
 
-$env = "$PWD\.env"
+$env = '$PWD\.env'
 $apikey = get-content $env | Where-Object { $_ -match 'ENCLAVE_APIKEY' } | ForEach-Object { $_.split('=')[1] }
 $orgid = get-content $env | Where-Object { $_ -match 'ENCLAVE_ORGID' } | ForEach-Object { $_.split('=')[1] }
 
