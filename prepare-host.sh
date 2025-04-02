@@ -7,15 +7,15 @@ set -euo pipefail
 # configure script actions
 DO_PREPARE_OS=true
 DO_INSTALL_ENCLAVE=true
-DO_RESTRICT_ROOT=true
+DO_RESTRICT_ROOT=false
 DO_UNATTENDED_UPGRADES=true
 
 # variables
 NEW_HOSTNAME=""
-SSH_USERNAME="enclave"
+SSH_USERNAME=""
 SSH_PASSWD=""
 SSH_KEY=""
-export ENCLAVE_ENROLMENT_KEY=XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
+export ENCLAVE_ENROLMENT_KEY=TT6W7-PTVQF-J53LF-TWAWR-YK8KR
 
 # =========================================================================
 
@@ -39,11 +39,11 @@ if [ "$DO_PREPARE_OS" = "true" ]; then
     apt install -y needrestart
     apt install -y gcc make tzdata jq iputils-ping net-tools iperf3 tcpdump telnet unzip wget screen software-properties-common gnupg speedtest-cli openssh-server gpg curl apt-transport-https
 
-    sudo timedatectl set-ntp on
-    sudo timedatectl set-timezone CST
+    # timedatectl set-ntp on
+    # timedatectl set-timezone CST
 
-    sudo systemctl enable ssh
-    sudo systemctl start ssh
+    # systemctl enable ssh
+    # systemctl start ssh
 
     if [ -n "$NEW_HOSTNAME" ]; then
 
@@ -246,8 +246,8 @@ Unattended-Upgrade::SyslogEnable "true";
 
 EOF
 
-sudo systemctl restart unattended-upgrades
-sudo unattended-upgrades --dry-run --debug
+systemctl restart unattended-upgrades
+unattended-upgrades --dry-run --debug
 
 fi
 
