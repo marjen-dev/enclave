@@ -1,10 +1,3 @@
-
-$tcog = "e5c4dd62eccf4e77b1a8995b45e30f2c"
-$bsc = "3b591bd85f5c4feeb3985f0efa593043"
-$marjen = "46eb673277c54fa5bcfc5186b8207c0e"
-$parish = "93bbd6813c9d40ed8cb5e088fa1e8a07"
-$lca = "bf85ac6d363349fa8ab877a60d8b5af4"
-
 # Use to create tags and policies to allow a user to rdp into their desktop
 
 $ErrorActionPreference = "Stop"
