@@ -2,6 +2,11 @@
 
 set -euo pipefail
 
+# set -e = immediately exit if any command has a non-zero exit status.
+# set -u = When set, a reference to any variable you haven't previously defined is an error, and causes the program to immediately exit.
+# set -o pipefail = Prevents errors in a pipeline from being masked.
+# set -x = print all executed commands to the terminal.
+
 # =========================================================================
 
 # configure script actions

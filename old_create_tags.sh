@@ -23,11 +23,11 @@ NEW_TAG="yellow"
 TAG_COLOUR="#C6FF00"
 
 # Fetch tags from Enclave API and load into an array
-tags=($( curl -s \
+tags=("$( curl -s \
     -H "Authorization: $API_KEY" \
     -H "Content-Type: application/json" \
     "https://api.enclave.io/org/$ORG_ID/tags?sort=Alphabetical&page=0&per_page=30" \
-    | jq -r '.items[].tag' ))
+    | jq -r '.items[].tag' )")
 
 # Check if the tag exists in the array
 tag_exists=false

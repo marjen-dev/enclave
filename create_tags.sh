@@ -35,13 +35,13 @@ fi
 # Define tag names and colors
 # ----------------------------------------
 
-prefix="internet"
+prefix="internet-gateway"
 notes="Auto-generated tag"
 
 tags=(
     "all-users:#C6FF00"
-    "${prefix}-gateway:#C6FF00"
-    "${prefix}-gateway-admin:#C6FF00"
+    "${prefix}:#C6FF00"
+    "${prefix}-admin:#C6FF00"
 )
 
 # ----------------------------------------
