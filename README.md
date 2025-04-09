@@ -12,21 +12,27 @@ You will need:
 The scripts in this repo are as follows:
 
 *config-tenant.py/ps1/sh*
+
 The basic tenant configuration script. This will include the create tags and policies scripts from below.
 
 *config-update-policies.py/ps1/sh*
+
 This will create or update policies (update is based on the policy name existing).
 
 *config-update-tags.py/ps1/sh*
+
 This will create or update tags (update is based on the tag name existing).
 
 *docker-compose.yml*
+
 Docker-compose file to spin up your docker instance along with watchtower to keep it updated.
 
 *prepare-host.sh*
+
 Striped down version of the official Enclave prepare-host.sh script.  This only creates one gateway without the entire stack (pihole, etc).
 
 *tf_main.tf*
+
 This is a work in progress.  Been having issues with TF.
 
 All scripts can be customized, but a couple of things you need to know.
