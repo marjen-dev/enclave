@@ -48,3 +48,9 @@ id_rsa.pub
 
 # Ignore generated stacks
 stacks/
+
+# Ignore samples & templates
+samples/
+templates/
+
+
