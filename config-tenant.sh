@@ -239,3 +239,4 @@ manage_policies
 }
 
 main "$@"
+

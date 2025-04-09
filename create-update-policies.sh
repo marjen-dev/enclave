@@ -104,3 +104,4 @@ fi
 done
 
 echo "All policies processed."
+

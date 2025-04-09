@@ -93,3 +93,4 @@ for entry in policies:
         requests.post(f"{API_URL}/policies", headers=HEADERS, data=json.dumps(policy_payload))
 
 print("All policies processed.")
+

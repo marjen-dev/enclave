@@ -76,3 +76,4 @@ for tag_entry in "${tags[@]}"; do
 done
 
 echo "All tags processed."
+

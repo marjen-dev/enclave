@@ -75,3 +75,4 @@ for tag_name, color in tags:
         requests.patch(f"{API_URL}/tags/{tag_ref}", headers=HEADERS, data=json.dumps(tag_payload))
 
 print("All tags processed.")
+

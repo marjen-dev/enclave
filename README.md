@@ -9,7 +9,7 @@ You will need:
       ENCLAVE_APIKEY=xxx (Enclave API key for an account with access to the tenant.)
       ENCLAVE_ORGID=yyy (Enclave tenant's organization identifier)
 
-- At least one Linux (All my testing was with Debian 12 but Enclave recommends and supports Ubuntu 22.04 LTS (or later)) server.
+- At least one Linux server. All my testing was with Debian 12 but Enclave recommends and supports Ubuntu 22.04 LTS (or later)
 
 ## Files
 
