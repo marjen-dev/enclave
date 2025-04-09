@@ -1,6 +1,6 @@
 # Setup and Management scripts for Enclave
 
-__Note: The basis of this content came from [github](https://github.com/enclave-networks/internet-gateway)__
+__Note: The basis of this content came from [Enclave-Networks github repo](https://github.com/enclave-networks/internet-gateway)__
 
 You will need:
 
