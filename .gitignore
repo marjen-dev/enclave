@@ -1,6 +1,12 @@
 # Ignore Mac system files
 .DS_Store
 
+# Ignore samples and templates
+samples/
+templates/
+.gitattributes
+.gitignore
+
 # Ignore temporary files and folders
 tmp/
 *.tmp
