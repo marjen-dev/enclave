@@ -6,8 +6,8 @@
 
 ENV_FILE=".env"
 
-API_KEY=$(grep ENCLAVE_API_KEY "$ENV_FILE" | cut -d '=' -f2- | xargs)
-ORG_ID=$(grep ENCLAVE_ORG_ID "$ENV_FILE" | cut -d '=' -f2- | xargs)
+API_KEY=$(grep ENCLAVE_APIKEY "$ENV_FILE" | cut -d '=' -f2- | xargs)
+ORG_ID=$(grep ENCLAVE_ORGID "$ENV_FILE" | cut -d '=' -f2- | xargs)
 
 # API base URL
 API_URL="https://api.enclave.io/org/$ORG_ID"

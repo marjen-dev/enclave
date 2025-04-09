@@ -11,7 +11,24 @@ $notes = "Configured by automation script"
 
 $envPath = "$PWD\.env"
 $apiKey = Get-Content $envPath | Where-Object { $_ -match 'ENCLAVE_APIKEY' } | ForEach-Object { $_.split('=')[1] }
-$orgId = Get-Content $envPath | Where-Object { $_ -match 'ENCLAVE_ORGID' } | ForEach-Object { $_.split('=')[1] }
+if (-not (Test-Path $envPath)) {
+    ErrorOut ".env file not found at $envPath"
+    return
+}
+
+$envContent = Get-Content $envPath | Where-Object { ($_ -match '=') -and (-not $_.StartsWith('#')) }
+
+if (-not ($envContent -match 'ENCLAVE_APIKEY')) {
+    ErrorOut "ENCLAVE_APIKEY not found in .env file"
+    return
+}
+
+if (-not ($envContent -match 'ENCLAVE_ORGID')) {
+    ErrorOut "ENCLAVE_ORGID not found in .env file"
+    return
+}
+
+$orgId = $envContent | Where-Object { $_ -match 'ENCLAVE_ORGID' } | ForEach-Object { $_.split('=')[1] }
 
 if ([string]::IsNullOrWhiteSpace($apiKey)) {
     $apiKey = $env:ENCLAVE_API_KEY
@@ -36,6 +53,20 @@ $contentType = "application/json"
 
 #endregion # Connection #
 
+function Write-Colored {
+    param (
+        [string]$Message,
+        [string]$Color = "White"
+    )
+    Write-Host $Message -ForegroundColor $Color
+}
+
+function Info($msg) { Write-Colored "[INFO]  $msg" "Cyan" }
+function Success($msg) { Write-Colored "[OK]    $msg" "Green" }
+function Warn($msg) { Write-Colored "[WARN]  $msg" "Yellow" }
+function ErrorOut($msg) { Write-Colored "[ERROR] $msg" "Red" }
+function DryRunOut($msg) { Write-Colored "[DRY-RUN] $msg" "Magenta" }
+
 #region # Invoke Enclave API #
 
 function Invoke-EnclaveApi {
@@ -46,9 +77,9 @@ function Invoke-EnclaveApi {
     )
 
     if ($DryRun) {
-        Write-Host "[DRY-RUN] $Method $Uri"
+        DryRunOut "$Method $Uri"
         if ($null -ne $Body) {
-            $Body | ConvertTo-Json -Depth 10 | Write-Host
+            $Body | ConvertTo-Json -Depth 10 | ForEach-Object { DryRunOut $_ }
         }
         return $null
     }
@@ -62,25 +93,18 @@ function Invoke-EnclaveApi {
         }
     }
     catch {
-        $webException = $_.Exception
-        $responseStream = $webException.Response.GetResponseStream()
-
-        if ($responseStream) {
-            $reader = New-Object System.IO.StreamReader($responseStream)
-            $responseBody = $reader.ReadToEnd()
-
-            if ($responseBody) {
-                $jsonResponse = $responseBody | ConvertFrom-Json -ErrorAction SilentlyContinue
-                if ($jsonResponse) {
-                    throw "Request to $Uri failed with error: $($webException.Message)`nResponse Details:`n$(ConvertTo-Json $jsonResponse -Depth 10)"
-                }
-                else {
-                    throw "Request to $Uri failed with error: $($webException.Message)`nResponse Body (Non-JSON):`n$responseBody"
-                }
+        if ($_.ErrorDetails.Message) {
+            try {
+                $jsonResponse = $_.ErrorDetails.Message | ConvertFrom-Json -ErrorAction Stop
+                throw "Request to $Uri failed with error: $($_.Exception.Message)`nResponse Details:`n$(ConvertTo-Json $jsonResponse -Depth 10)"
+            }
+            catch {
+                throw "Request to $Uri failed with error: $($_.Exception.Message)`nResponse Body (Non-JSON):`n$($_.ErrorDetails.Message)"
             }
         }
-
-        throw "Request to $Uri failed with error: $($webException.Message)"
+        else {
+            throw "Request to $Uri failed with error: $($_.Exception.Message)"
+        }
     }
 }
 
@@ -95,19 +119,18 @@ $tags = @(
     @{ name = "internet-gateway-local-ad-dns"; colour = "#C6FF00" }
 )
 
-Write-Host "Evaluating Tags..."
+Info "Evaluating Tags..."
 
 foreach ($tag in $tags) {
     $tagsPatch = @{ tag = $tag.name; colour = $tag.colour; notes = $notes }
     $response = Invoke-EnclaveApi -Method Get -Uri "https://api.enclave.io/org/$orgId/tags?search=$($tag.name)"
 
     if ($response.metadata.total -eq 0) {
-        Write-Host "  Creating tag: $($tag.name)"
+        Success "Creating tag: $($tag.name)"
         $null = Invoke-EnclaveApi -Method Post -Uri "https://api.enclave.io/org/$orgId/tags" -Body $tagsPatch
-    }
-    else {
+    } else {
         $tagRef = $response.items[0].ref
-        Write-Host "  Refreshing tag: $($tag.name)"
+        Success "Refreshing tag: $($tag.name)"
         $null = Invoke-EnclaveApi -Method Patch -Uri "https://api.enclave.io/org/$orgId/tags/$tagRef" -Body $tagsPatch
     }
 }
@@ -116,19 +139,18 @@ foreach ($tag in $tags) {
 
 #region # DNS Records #
 
-Write-Host "Evaluating DNS Records..."
+Info "Evaluating DNS Records..."
 
 foreach ($dnsRecord in @("blocked", "dnsfilter")) {
     $dnsPatch = @{ name = $dnsRecord; zoneId = 1; notes = $notes; tags = @("internet-gateway") }
     $response = Invoke-EnclaveApi -Method Get -Uri "https://api.enclave.io/org/$orgId/dns/records?hostname=$dnsRecord"
 
     if ($response.metadata.total -eq 0) {
-        Write-Host "  Creating DNS record: $dnsRecord.enclave"
+        Success "Creating DNS record: $dnsRecord.enclave"
         $null = Invoke-EnclaveApi -Method Post -Uri "https://api.enclave.io/org/$orgId/dns/records" -Body $dnsPatch
-    }
-    else {
+    } else {
         $dnsId = $response.items[0].id
-        Write-Host "  Refreshing DNS record: #$dnsId $($response.items[0].name).enclave"
+        Success "Refreshing DNS record: #$dnsId $($response.items[0].name).enclave"
         $null = Invoke-EnclaveApi -Method Patch -Uri "https://api.enclave.io/org/$orgId/dns/records/$dnsId" -Body $dnsPatch
     }
 }
@@ -137,7 +159,7 @@ foreach ($dnsRecord in @("blocked", "dnsfilter")) {
 
 #region # Enrolment Keys #
 
-Write-Host "Creating enrolment keys..."
+Info "Creating enrolment keys..."
 $currentTime = (Get-Date).ToUniversalTime()
 $expiry = $currentTime.AddHours(1).ToString("yyyy-MM-ddTHH:mm")
 
@@ -161,11 +183,10 @@ foreach ($enrolmentKey in $enrolmentKeys) {
     $response = Invoke-EnclaveApi -Method Get -Uri "https://api.enclave.io/org/$orgId/enrolment-keys?search=$($enrolmentKey.description)"
 
     if ($response.metadata.total -eq 0) {
-        Write-Host "  Creating enrolment key: $($enrolmentKey.description)"
+        Success "Creating enrolment key: $($enrolmentKey.description)"
         $null = Invoke-EnclaveApi -Method Post -Uri "https://api.enclave.io/org/$orgId/enrolment-keys" -Body $enrolmentKey
-    }
-    else {
-        Write-Host "  Enrolment key already exists: $($enrolmentKey.description)"
+    } else {
+        Success "Enrolment key already exists: $($enrolmentKey.description)"
     }
 }
 
@@ -173,7 +194,7 @@ foreach ($enrolmentKey in $enrolmentKeys) {
 
 #region # Trust Requirements #
 
-Write-Host "Creating trust requirements..."
+Info "Creating trust requirements..."
 
 $trustRequirements = @(
     @{
@@ -182,7 +203,7 @@ $trustRequirements = @(
         notes       = $null
         settings    = @{
             conditions    = @(
-                @{ type = "country"; isBlocked = $false; value = "US" }
+                @{ type = "country"; isBlocked = "false"; value = "US" }
             )
             configuration = @{}
         }
@@ -193,12 +214,11 @@ foreach ($trustRequirement in $trustRequirements) {
     $response = Invoke-EnclaveApi -Method Get -Uri "https://api.enclave.io/org/$orgId/trust-requirements?search=$($trustRequirement.description)"
 
     if ($response.metadata.total -eq 0) {
-        Write-Host "  Creating trust requirement: $($trustRequirement.description)"
+        Success "Creating trust requirement: $($trustRequirement.description)"
         $trustRequirementResponse = Invoke-EnclaveApi -Method Post -Uri "https://api.enclave.io/org/$orgId/trust-requirements" -Body $trustRequirement
         $trustRequirementId = $trustRequirementResponse.id
-    }
-    else {
-        Write-Host "  Refreshing trust requirement: $($trustRequirement.description)"
+    } else {
+        Success "Refreshing trust requirement: $($trustRequirement.description)"
         $trustRequirementId = $response.items[0].id
         $null = Invoke-EnclaveApi -Method Patch -Uri "https://api.enclave.io/org/$orgId/trust-requirements/$trustRequirementId" -Body $trustRequirement
     }
@@ -208,7 +228,7 @@ foreach ($trustRequirement in $trustRequirements) {
 
 #region # Systems #
 
-Write-Host "Checking enrolled systems..."
+Info "Checking enrolled systems..."
 $response = Invoke-EnclaveApi -Method Get -Uri "https://api.enclave.io/org/$orgId/systems?search=key:Gateway"
 
 if ($response.items.Count -gt 0) {
@@ -227,18 +247,17 @@ if ($response.items.Count -gt 0) {
         tags          = @("internet-gateway")
     }
 
-    Write-Host "  Refreshing system: $gatewaySystemId ($gatewaySystemHostname)"
+    Success "Refreshing system: $gatewaySystemId ($gatewaySystemHostname)"
     $null = Invoke-EnclaveApi -Method Patch -Uri "https://api.enclave.io/org/$orgId/systems/$gatewaySystemId" -Body $systemPatch
-}
-else {
-    Write-Host "  No gateway systems enrolled"
+} else {
+    Warn "No gateway systems enrolled"
 }
 
 #endregion # Systems #
 
 #region # Policies #
 
-Write-Host "Configuring Policies..."
+Info "Configuring Policies..."
 
 $policiesModel = @(
     @{
@@ -294,15 +313,13 @@ foreach ($policyModel in $policiesModel) {
 
     if ($matches.Count -eq 1) {
         $matchedPolicy = $matches[0]
-        Write-Host "  Refreshing policy: #$($matchedPolicy.id) $($matchedPolicy.description)"
+        Success "Refreshing policy: #$($matchedPolicy.id) $($matchedPolicy.description)"
         $null = Invoke-EnclaveApi -Method Patch -Uri "https://api.enclave.io/org/$orgId/policies/$($matchedPolicy.id)" -Body $policyModel
-    }
-    elseif ($matches.Count -eq 0) {
-        Write-Host "  Creating policy: $($policyModel.description)"
+    } elseif ($matches.Count -eq 0) {
+        Success "Creating policy: $($policyModel.description)"
         $null = Invoke-EnclaveApi -Method Post -Uri "https://api.enclave.io/org/$orgId/policies" -Body $policyModel
-    }
-    else {
-        Write-Host "  Multiple policies matched for $($policyModel.description), skipping update."
+    } else {
+        Warn "Multiple policies matched for $($policyModel.description), skipping update."
         foreach ($item in $matches) {
             Write-Host "    - #$($item.id): $($item.description)"
         }
@@ -310,3 +327,9 @@ foreach ($policyModel in $policiesModel) {
 }
 
 #endregion # Policies #
+
+#region # Final Confirmation #
+
+Success "All configuration steps completed successfully."
+
+#endregion # Final Confirmation #

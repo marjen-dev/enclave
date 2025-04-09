@@ -9,8 +9,8 @@ init(autoreset=True)
 
 load_dotenv()
 
-API_KEY = os.getenv("ENCLAVE_API_KEY")
-ORG_ID = os.getenv("ENCLAVE_ORG_ID")
+API_KEY = os.getenv("ENCLAVE_APIKEY")
+ORG_ID = os.getenv("ENCLAVE_ORGID")
 BASE_URL = f"https://api.enclave.io/org/{ORG_ID}"
 HEADERS = {
     "Authorization": f"Bearer {API_KEY}",

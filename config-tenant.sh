@@ -6,7 +6,7 @@ set -euo pipefail
 if [[ -f .env ]]; then
     while IFS='=' read -r key value; do
     case "$key" in
-        ENCLAVE_API_KEY|ENCLAVE_ORG_ID)
+        ENCLAVE_APIKEY|ENCLAVE_ORGID)
             export "$key"="$value"
             ;;
     esac

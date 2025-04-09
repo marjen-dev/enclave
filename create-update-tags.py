@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-API_KEY = os.getenv("ENCLAVE_API_KEY")
-ORG_ID = os.getenv("ENCLAVE_ORG_ID")
+API_KEY = os.getenv("ENCLAVE_APIKEY")
+ORG_ID = os.getenv("ENCLAVE_ORGID")
 
 # API base URL and headers
 API_URL = f"https://api.enclave.io/org/{ORG_ID}"
