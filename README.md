@@ -11,6 +11,8 @@ You will need:
 
 - At least one Linux (All my testing was with Debian 12 but Enclave recommends and supports Ubuntu 22.04 LTS (or later)) server.
 
+## Files
+
 The scripts in this repo are as follows:
 
 `config-tenant.py/ps1/sh`     The basic tenant configuration script. This will include the create tags and policies scripts from below.
@@ -25,6 +27,8 @@ The scripts in this repo are as follows:
 
 `tf_main.tf`     This is a work in progress.  Been having issues with TF.
 
+### Note
+
 All scripts can be customized, but a couple of things you need to know.
 
 If you are running the python versions you will need to have requests and colorama installed in python.
@@ -37,7 +41,9 @@ All the scripts support a dry-run option.
 ./config-tenant.sh --dry-run
 ```
 
-__Note:__ The `config-tenant` scritps will create an Enrolment Key that's valid for one hour and two system enrollments in the target tenant which you will use to enrol each Internet Gateway:
+### Note
+
+The `config-tenant` scritps will create an Enrolment Key that's valid for one hour and two system enrollments in the target tenant which you will use to enrol each Internet Gateway:
 
 ```shell
 Checking for enrolled Internet Gateways...
@@ -49,7 +55,8 @@ Checking for enrolled Internet Gateways...
   This key will automatically expire in 1 hour.
 ```
 
-__Note:__ That the `prepare-host.sh` script can be customized. By default, it prepares the OS by installing required dependencies, Docker, and Enclave. You can also enable the script to install the NetData agent, restrict SSH access for root, and enable unattended security updates.
+### Note
+The `prepare-host.sh` script can be customized. By default, it prepares the OS by installing required dependencies, Docker, and Enclave. You can also enable the script to install the NetData agent, restrict SSH access for root, and enable unattended security updates.
 
 ```shell
   DO_PREPARE_OS=true
