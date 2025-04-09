@@ -15,7 +15,7 @@ NEW_HOSTNAME=""
 SSH_USERNAME=""
 SSH_PASSWD=""
 SSH_KEY=""
-export ENCLAVE_ENROLMENT_KEY=TT6W7-PTVQF-J53LF-TWAWR-YK8KR
+export ENCLAVE_ENROLMENT_KEY=xxxxx-xxxxx-xxxxx-xxxxx-xxxxx
 
 # =========================================================================
 
